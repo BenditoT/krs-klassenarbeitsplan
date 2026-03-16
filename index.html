@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#506070">
+<title>KRS Klassenarbeitsplan</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+/* ===== CSS Reset & Base ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* KRS Brand Colors: Schieferblau, Orange, Goldgelb */
+  --primary:#506070;--primary-light:#e8ecf0;--primary-dark:#3a4a58;
+  --accent:#d07030;--accent-light:#fdf0e6;--accent-dark:#b05a20;
+  --gold:#e0b040;--gold-light:#fdf6e0;
+  --ka-haupt:#d07030;--ka-neben:#508060;--test:#e0b040;--event:#8868a8;
+  --holiday:#9ca3af;--warn:#ef4444;--warn-light:#fee2e2;
+  --exception:#ff6b6b;--exception-light:#ffe0e0;
+  --bg:#f7f8fa;--card:#fff;--border:#dde2e8;--text:#2c3e50;--text-light:#6c7a89;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.1);
+  --touch-min:44px;
+}
+html{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;color:var(--text);background:var(--bg)}
+body{min-height:100vh;min-height:100dvh;overflow-x:hidden}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+a{color:var(--primary);text-decoration:none}
+
+/* ===== Layout ===== */
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.header{background:var(--primary);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.header h1{font-size:1.1rem;font-weight:600;white-space:nowrap}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.header .btn-icon{width:var(--touch-min);height:var(--touch-min);display:flex;align-items:center;justify-content:center;border-radius:var(--radius);color:#fff;font-size:1.2rem}
+.header .btn-icon:hover{background:rgba(255,255,255,.15)}
+
+/* Nav Week Selector */
+.nav-bar{background:#fff;border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.nav-bar .week-nav{display:flex;align-items:center;gap:4px}
+.nav-bar .week-nav button{width:36px;height:36px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.nav-bar .week-nav button:hover{background:var(--primary-light)}
+.nav-bar .week-label{font-weight:600;min-width:120px;text-align:center;font-size:.95rem}
+.nav-bar .today-btn{background:var(--accent);color:#fff;padding:6px 14px;border-radius:var(--radius);font-size:.85rem;font-weight:500}
+.nav-bar .today-btn:hover{background:var(--accent-dark)}
+.filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filter-bar select{padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;font-size:.85rem;min-height:var(--touch-min)}
+.filter-bar .filter-label{font-size:.8rem;color:var(--text-light)}
+
+/* ===== Calendar Grid ===== */
+.calendar-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;position:relative}
+.calendar{display:grid;min-width:100%;border-collapse:collapse}
+.cal-header{position:sticky;top:0;z-index:10;background:var(--primary);color:#fff;font-weight:600;font-size:.8rem;padding:8px 4px;text-align:center;border-right:1px solid rgba(255,255,255,.2);white-space:nowrap}
+.cal-header.day-col{background:#f1f5f9;color:var(--text);border-right:1px solid var(--border);min-width:80px;position:sticky;left:0;z-index:11}
+.cal-day{position:sticky;left:0;z-index:5;background:#fff;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 8px;font-size:.8rem;font-weight:500;min-width:80px;min-height:var(--touch-min)}
+.cal-day.today{background:var(--accent-light);font-weight:700}
+.cal-day.holiday{background:#f1f5f9;color:var(--holiday)}
+.cal-day .day-name{font-size:.7rem;color:var(--text-light);text-transform:uppercase}
+.cal-day .day-date{font-size:.9rem}
+.cal-cell{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:3px;min-height:var(--touch-min);min-width:90px;cursor:pointer;transition:background .15s;position:relative;vertical-align:top}
+.cal-cell:hover{background:var(--primary-light)}
+.cal-cell.holiday{background:#f9fafb;cursor:default}
+.cal-cell.holiday:hover{background:#f9fafb}
+.cal-cell.weekend{background:#f9fafb;cursor:default}
+.cal-cell.weekend:hover{background:#f9fafb}
+
+/* Booking Chips */
+.chip{display:block;padding:3px 6px;border-radius:4px;font-size:.72rem;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;line-height:1.3;cursor:pointer}
+.chip.ka-haupt{background:var(--ka-haupt)}
+.chip.ka-neben{background:var(--ka-neben)}
+.chip.test{background:var(--test);color:#333}
+.chip.event{background:var(--event)}
+.chip.holiday-chip{background:var(--holiday);font-weight:400;font-size:.7rem}
+.chip.exception{background:var(--exception);animation:pulse-exception 2s infinite}
+@keyframes pulse-exception{0%,100%{opacity:1}50%{opacity:.75}}
+.chip .chip-teacher{font-weight:400;opacity:.85;font-size:.65rem}
+.header-logo{height:32px;width:auto;margin-right:4px;border-radius:4px;background:#fff;padding:2px}
+
+/* Warning badges */
+.warn-badge{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:var(--warn);color:#fff;font-size:.65rem;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+/* ===== Modal / Dialog ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .2s}
+.modal{background:#fff;border-radius:12px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:slideUp .25s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-header h2{font-size:1.1rem}
+.modal-body{padding:20px}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* Form */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:.85rem;font-weight:600;margin-bottom:4px;color:var(--text)}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.95rem;min-height:var(--touch-min)}
+.form-group textarea{resize:vertical;min-height:60px}
+.form-group .radio-group{display:flex;gap:8px;flex-wrap:wrap}
+.form-group .radio-group label{display:flex;align-items:center;gap:6px;font-weight:400;padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;min-height:var(--touch-min)}
+.form-group .radio-group label.active{background:var(--accent-light);border-color:var(--accent)}
+.form-group .radio-group input[type=radio]{display:none}
+.validation-msg{margin-top:12px;padding:10px 14px;border-radius:var(--radius);font-size:.85rem;display:flex;align-items:flex-start;gap:8px}
+.validation-msg.ok{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.validation-msg.warn{background:#fefce8;color:#854d0e;border:1px solid #fef08a}
+.validation-msg.error{background:var(--warn-light);color:#991b1b;border:1px solid #fecaca}
+
+/* Buttons */
+.btn{padding:10px 20px;border-radius:var(--radius);font-weight:600;font-size:.9rem;min-height:var(--touch-min);display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-dark)}
+.btn-secondary{background:#f1f5f9;color:var(--text)}.btn-secondary:hover{background:#e2e8f0}
+.btn-danger{background:var(--warn);color:#fff}.btn-danger:hover{background:#dc2626}
+.btn-sm{padding:6px 12px;font-size:.8rem;min-height:32px}
+
+/* ===== Login Screen ===== */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 60%,var(--accent-dark) 100%)}
+.login-card{background:#fff;border-radius:16px;padding:40px 32px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center}
+.login-card h1{font-size:1.3rem;margin-bottom:4px;color:var(--accent)}
+.login-logo{width:120px;height:auto;margin-bottom:12px}
+.login-card .subtitle{color:var(--text-light);font-size:.9rem;margin-bottom:24px}
+.login-card .form-group{text-align:left}
+.login-card .error-msg{color:var(--warn);font-size:.85rem;margin-top:8px}
+.pin-input{letter-spacing:8px;text-align:center;font-size:1.5rem;font-weight:700}
+
+/* ===== Print View ===== */
+.print-overlay{position:fixed;inset:0;background:#fff;z-index:300;overflow-y:auto;padding:20px}
+.print-overlay .print-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid var(--text)}
+.print-overlay h2{font-size:1.2rem}
+.print-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.print-table th,.print-table td{padding:6px 10px;border:1px solid #ccc;text-align:left}
+.print-table th{background:#f1f5f9;font-weight:600}
+.print-table tr:nth-child(even){background:#f9fafb}
+@media print{
+  .no-print{display:none!important}
+  .print-overlay{position:static;padding:0}
+  .print-table{font-size:9pt}
+  @page{margin:1cm}
+}
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+  .header h1{font-size:.95rem}
+  .nav-bar{padding:6px 12px}
+  .filter-bar{gap:4px}
+  .cal-cell{min-width:75px}
+}
+
+/* ===== Spinner ===== */
+.spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;margin:20px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px;color:var(--text-light)}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 24px;border-radius:var(--radius);font-size:.9rem;z-index:500;animation:fadeIn .3s;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.toast.error{background:var(--warn)}
+.toast.success{background:#16a34a}
+
+/* Sidebar Menu */
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:150;animation:fadeIn .2s}
+.sidebar{position:fixed;top:0;right:0;bottom:0;width:280px;background:#fff;z-index:151;box-shadow:-4px 0 20px rgba(0,0,0,.1);animation:slideLeft .25s;padding:20px 0;overflow-y:auto}
+@keyframes slideLeft{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.sidebar h3{padding:0 20px;margin-bottom:16px;font-size:1rem}
+.sidebar-item{display:flex;align-items:center;gap:12px;padding:12px 20px;font-size:.95rem;cursor:pointer;min-height:var(--touch-min)}
+.sidebar-item:hover{background:var(--primary-light)}
+.sidebar-item .icon{font-size:1.2rem;width:24px;text-align:center}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 0}
+.sidebar .user-info{padding:12px 20px;background:var(--primary-light);margin:0 12px;border-radius:var(--radius);font-size:.85rem;margin-bottom:12px}
+.sidebar .user-info strong{display:block;font-size:.95rem}
+
+/* ===== View Switcher ===== */
+.view-switcher{display:flex;gap:2px;background:var(--border);border-radius:var(--radius);padding:2px;margin-left:auto}
+.view-switcher button{padding:5px 12px;border-radius:6px;font-size:.8rem;font-weight:500;color:var(--text-light);transition:all .15s;white-space:nowrap}
+.view-switcher button.active{background:#fff;color:var(--text);box-shadow:var(--shadow)}
+.view-switcher button:hover:not(.active){background:rgba(255,255,255,.5)}
+
+/* ===== Month View ===== */
+.month-grid{display:grid;min-width:100%;border-collapse:collapse}
+.month-day-label{position:sticky;left:0;z-index:5;background:#fff;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px 6px;font-size:.75rem;font-weight:500;min-width:70px}
+.month-day-label.today{background:var(--accent-light);font-weight:700}
+.month-day-label.holiday{background:#f1f5f9;color:var(--holiday)}
+.month-day-label .day-name{font-size:.65rem;color:var(--text-light);text-transform:uppercase}
+.month-day-label .day-date{font-size:.8rem}
+.month-cell{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:2px;min-height:32px;min-width:80px;cursor:pointer;transition:background .15s;position:relative;vertical-align:top}
+.month-cell:hover{background:var(--primary-light)}
+.month-cell.holiday,.month-cell.weekend{background:#f9fafb;cursor:default}
+.month-cell.holiday:hover,.month-cell.weekend:hover{background:#f9fafb}
+.month-chip{display:block;padding:1px 4px;border-radius:3px;font-size:.6rem;font-weight:600;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;line-height:1.2;cursor:pointer}
+.month-chip.ka-haupt{background:var(--ka-haupt)}
+.month-chip.ka-neben{background:var(--ka-neben)}
+.month-chip.test{background:var(--gold);color:#333}
+.month-chip.event{background:var(--event)}
+.month-chip.exception{background:var(--exception)}
+.month-week-sep{grid-column:1/-1;height:2px;background:var(--primary-light)}
+
+/* ===== Year View ===== */
+.year-container{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px}
+.year-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:16px}
+.mini-month{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.mini-month-header{background:var(--primary);color:#fff;padding:8px 12px;font-weight:600;font-size:.85rem;text-align:center}
+.mini-month-grid{display:grid;grid-template-columns:repeat(5, 1fr);gap:1px;padding:4px;background:#fff}
+.mini-month-day-header{text-align:center;font-size:.65rem;color:var(--text-light);font-weight:600;padding:2px}
+.mini-day{text-align:center;padding:3px 2px;font-size:.7rem;border-radius:3px;cursor:pointer;position:relative;min-height:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.mini-day:hover{background:var(--primary-light)}
+.mini-day.today{background:var(--accent-light);font-weight:700}
+.mini-day.holiday{color:var(--holiday);background:#f9fafb;cursor:default}
+.mini-day.holiday:hover{background:#f9fafb}
+.mini-day.empty{cursor:default}.mini-day.empty:hover{background:transparent}
+.mini-day .day-num{font-size:.7rem}
+.mini-day-dots{display:flex;gap:1px;justify-content:center;flex-wrap:wrap;max-width:100%}
+.mini-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.mini-dot.ka-haupt{background:var(--ka-haupt)}
+.mini-dot.ka-neben{background:var(--ka-neben)}
+.mini-dot.test{background:var(--gold)}
+.mini-dot.event{background:var(--event)}
+.mini-dot.exception{background:var(--exception)}
+.year-legend{display:flex;gap:12px;flex-wrap:wrap;padding:8px 12px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;align-items:center;font-size:.8rem}
+.year-legend-item{display:flex;align-items:center;gap:4px}
+.year-legend-dot{width:10px;height:10px;border-radius:50%}
+.year-nav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.year-nav h2{font-size:1.1rem;font-weight:600}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="module">
+// ===== Imports =====
+import { h, render, Component } from 'https://esm.sh/preact@10.19.3';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'https://esm.sh/preact@10.19.3/hooks';
+import htm from 'https://esm.sh/htm@3.1.1';
+const html = htm.bind(h);
+
+// ===== Configuration =====
+const CONFIG = {
+  // Google Apps Script Web-App URL - hier die eigene URL eintragen nach Deployment
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbz4fhAOAJoenXvKBUN97jb4dMgRHOY05Jb0EltVPO3G0Mj5teklriCiCFbGheaSSI_EyQ/exec',
+  POLL_INTERVAL: 60000, // 60s Polling
+  APP_VERSION: '1.0.0',
+  SCHOOL_NAME: 'Kurpfalz-Realschule Schriesheim',
+  SCHOOL_YEAR: '2025/26',
+};
+
+// ===== Static Data (Fallback wenn GAS nicht erreichbar) =====
+const KLASSEN = [
+  '5a','5b','5c','6a','6b','6c','7a','7b','7c','7d',
+  '8a','8b','8c','8d','9a','9b','9c','9d','10a','10b','10c'
+];
+
+const KLASSEN_META = {};
+KLASSEN.forEach(k => {
+  const stufe = parseInt(k);
+  // Max 2 KA pro Woche für ALLE Klassen (Schulregel KRS)
+  KLASSEN_META[k] = { stufe, maxKaWoche: 2 };
+});
+
+const FAECHER = [
+  { kuerzel: 'D', name: 'Deutsch', gruppe: 'Hauptfach' },
+  { kuerzel: 'M', name: 'Mathematik', gruppe: 'Hauptfach' },
+  { kuerzel: 'E', name: 'Englisch', gruppe: 'Hauptfach' },
+  { kuerzel: 'F', name: 'Französisch', gruppe: 'Hauptfach' },
+  { kuerzel: 'Ph', name: 'Physik', gruppe: 'Nebenfach' },
+  { kuerzel: 'Ch', name: 'Chemie', gruppe: 'Nebenfach' },
+  { kuerzel: 'Bio', name: 'Biologie', gruppe: 'Nebenfach' },
+  { kuerzel: 'Geo', name: 'Geographie', gruppe: 'Nebenfach' },
+  { kuerzel: 'G', name: 'Geschichte', gruppe: 'Nebenfach' },
+  { kuerzel: 'Gk', name: 'Gemeinschaftskunde', gruppe: 'Nebenfach' },
+  { kuerzel: 'WBS', name: 'WBS', gruppe: 'Nebenfach' },
+  { kuerzel: 'BK', name: 'Bildende Kunst', gruppe: 'Nebenfach' },
+  { kuerzel: 'Mu', name: 'Musik', gruppe: 'Nebenfach' },
+  { kuerzel: 'Sp', name: 'Sport', gruppe: 'Nebenfach' },
+  { kuerzel: 'Rel', name: 'Religion', gruppe: 'Nebenfach' },
+  { kuerzel: 'Eth', name: 'Ethik', gruppe: 'Nebenfach' },
+  { kuerzel: 'Te', name: 'Technik', gruppe: 'Nebenfach' },
+  { kuerzel: 'AES', name: 'AES', gruppe: 'Nebenfach' },
+  { kuerzel: 'Inf', name: 'Informatik', gruppe: 'Nebenfach' },
+];
+
+const ART_TYPEN = [
+  { value: 'KA', label: 'Klassenarbeit', color: 'ka' },
+  { value: 'Test', label: 'Test', color: 'test' },
+  { value: 'VocTest', label: 'Voc-Test', color: 'test' },
+  { value: 'GFS', label: 'GFS', color: 'ka-neben' },
+  { value: 'Nachschreiber', label: 'Nachschreibtermin', color: 'ka' },
+  { value: 'Projekt', label: 'Projektprüfung', color: 'ka-neben' },
+];
+
+const FERIEN_BW_2025_26 = [
+  { von: '2025-10-27', bis: '2025-10-31', bezeichnung: 'Herbstferien' },
+  { von: '2025-12-22', bis: '2026-01-05', bezeichnung: 'Weihnachtsferien' },
+  { von: '2026-02-16', bis: '2026-02-20', bezeichnung: 'Faschingsferien' },
+  { von: '2026-04-02', bis: '2026-04-14', bezeichnung: 'Osterferien' },
+  { von: '2026-05-26', bis: '2026-06-05', bezeichnung: 'Pfingstferien' },
+  { von: '2026-07-30', bis: '2026-09-12', bezeichnung: 'Sommerferien' },
+];
+
+// ===== Utility Functions =====
+function generateId() {
+  const ts = Date.now().toString(36);
+  const rand = Math.random().toString(36).substring(2, 8);
+  return `b_${ts}_${rand}`;
+}
+
+function formatDate(d) {
+  const date = new Date(d);
+  return date.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatDateShort(d) {
+  const date = new Date(d);
+  return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+}
+
+function dateKey(d) {
+  const date = new Date(d);
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+
+function getMonday(d) {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(date.setDate(diff));
+}
+
+function addDays(d, n) {
+  const date = new Date(d);
+  date.setDate(date.getDate() + n);
+  return date;
+}
+
+function getKW(d) {
+  const date = new Date(d);
+  const oneJan = new Date(date.getFullYear(), 0, 1);
+  const days = Math.floor((date - oneJan) / 86400000);
+  return Math.ceil((days + oneJan.getDay() + 1) / 7);
+}
+
+function isWeekend(d) {
+  const day = new Date(d).getDay();
+  return day === 0 || day === 6;
+}
+
+function isHoliday(d, ferien) {
+  const dk = dateKey(d);
+  return ferien.some(f => dk >= f.von && dk <= f.bis);
+}
+
+function getHolidayName(d, ferien) {
+  const dk = dateKey(d);
+  const f = ferien.find(f => dk >= f.von && dk <= f.bis);
+  return f ? f.bezeichnung : '';
+}
+
+function getWeekDates(monday) {
+  return [0,1,2,3,4].map(i => addDays(monday, i));
+}
+
+function getMonthWeekdays(year, month) {
+  // Returns all weekdays (Mo-Fr) of the given month
+  const days = [];
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const dow = date.getDay();
+    if (dow >= 1 && dow <= 5) days.push(date);
+  }
+  return days;
+}
+
+const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+function getSchoolYearMonths(schoolYearStart) {
+  // Returns array of {year, month} from September to July
+  const months = [];
+  for (let i = 0; i < 11; i++) {
+    const m = (8 + i) % 12; // Start at September (8)
+    const y = m >= 8 ? schoolYearStart : schoolYearStart + 1;
+    months.push({ year: y, month: m });
+  }
+  return months;
+}
+
+function sanitize(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// SHA-256 Hash für PIN (client-seitiges Hashing vor Übertragung)
+async function hashPin(pin) {
+  const salt = 'krs-schriesheim-2025';
+  const input = pin + ':' + salt;
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  // Base64-Encode (kompatibel mit GAS Utilities.base64Encode)
+  return btoa(String.fromCharCode(...hashArray));
+}
+
+function getFachGruppe(fachKuerzel) {
+  const fach = FAECHER.find(f => f.kuerzel === fachKuerzel);
+  return fach ? fach.gruppe : 'Nebenfach';
+}
+
+function getChipClass(art, fachKuerzel, isException) {
+  if (isException) return 'exception';
+  if (art === 'Test' || art === 'VocTest') return 'test';
+  if (getFachGruppe(fachKuerzel) === 'Hauptfach') return 'ka-haupt';
+  return 'ka-neben';
+}
+
+// Check if a booking is an exception (3rd+ KA in a week for its class)
+// NVO: Nur reguläre KA zählen, Nachschreiber nicht
+function isExceptionBooking(buchung) {
+  if (buchung.art !== 'KA') return false; // Nur reguläre KA können Ausnahmen sein
+  const monday = getMonday(buchung.datum);
+  const weekKAs = Store.buchungen.filter(b => {
+    if (b.klasse !== buchung.klasse) return false;
+    if (b.art !== 'KA') return false; // Nur reguläre KA zählen
+    const bMonday = getMonday(b.datum);
+    return dateKey(bMonday) === dateKey(monday);
+  }).sort((a,b) => {
+    // Sort by datum then erstellt_am to determine order
+    if (a.datum !== b.datum) return a.datum.localeCompare(b.datum);
+    return (a.erstellt_am || '').localeCompare(b.erstellt_am || '');
+  });
+  const idx = weekKAs.findIndex(b => b.id === buchung.id);
+  return idx >= 2; // 3rd or later = exception (0-indexed: 0,1 are ok, 2+ is exception)
+}
+
+// ===== Data Store =====
+const Store = {
+  _buchungen: [],
+  _lehrkraefte: [],
+  _events: [],
+  _ferien: [...FERIEN_BW_2025_26],
+  _listeners: new Set(),
+  _lastSync: null,
+  _user: null,
+
+  init() {
+    // Load from localStorage cache
+    try {
+      const cached = localStorage.getItem('krs_ka_data');
+      if (cached) {
+        const data = JSON.parse(cached);
+        this._buchungen = data.buchungen || [];
+        this._lehrkraefte = data.lehrkraefte || [];
+        this._events = data.events || [];
+        if (data.ferien && data.ferien.length) this._ferien = data.ferien;
+        this._lastSync = data.lastSync;
+      }
+      const user = localStorage.getItem('krs_ka_user');
+      if (user) this._user = JSON.parse(user);
+    } catch(e) { console.warn('Cache load error:', e); }
+  },
+
+  save() {
+    try {
+      localStorage.setItem('krs_ka_data', JSON.stringify({
+        buchungen: this._buchungen,
+        lehrkraefte: this._lehrkraefte,
+        events: this._events,
+        ferien: this._ferien,
+        lastSync: this._lastSync
+      }));
+    } catch(e) { console.warn('Cache save error:', e); }
+  },
+
+  subscribe(fn) { this._listeners.add(fn); return () => this._listeners.delete(fn); },
+  notify() { this._listeners.forEach(fn => fn()); },
+
+  get buchungen() { return this._buchungen.filter(b => b.status !== 'storniert'); },
+  get alleBuchungen() { return this._buchungen; },
+  get lehrkraefte() { return this._lehrkraefte; },
+  get events() { return this._events; },
+  get ferien() { return this._ferien; },
+  get user() { return this._user; },
+
+  setUser(user) {
+    this._user = user;
+    if (user) localStorage.setItem('krs_ka_user', JSON.stringify(user));
+    else localStorage.removeItem('krs_ka_user');
+    this.notify();
+  },
+
+  getBuchungenForDay(datum, klasse) {
+    const dk = dateKey(datum);
+    return this.buchungen.filter(b => b.datum === dk && b.klasse === klasse);
+  },
+
+  getBuchungenForWeek(monday, klasse) {
+    const dates = getWeekDates(monday).map(d => dateKey(d));
+    return this.buchungen.filter(b => dates.includes(b.datum) && b.klasse === klasse);
+  },
+
+  getKaCountForWeek(monday, klasse) {
+    const buch = this.getBuchungenForWeek(monday, klasse);
+    return buch.filter(b => b.art === 'KA').length; // Nur reguläre KA zählen (NVO), nicht Nachschreiber
+  },
+
+  // Validation
+  validate(buchung, excludeId = null) {
+    const warnings = [];
+    const errors = [];
+    const dk = buchung.datum;
+    const klasse = buchung.klasse;
+
+    // 1. Holiday check
+    if (isHoliday(dk, this._ferien)) {
+      errors.push('Dieser Tag liegt in den Ferien/Feiertagen.');
+    }
+
+    // 2. Weekend check
+    if (isWeekend(dk)) {
+      errors.push('Kein Termin am Wochenende möglich.');
+    }
+
+    // 3. Max 1 KA per day per class — NUR reguläre KA, NICHT Nachschreiber
+    if (buchung.art === 'KA') {
+      const existing = this.buchungen.filter(b =>
+        b.datum === dk && b.klasse === klasse &&
+        b.art === 'KA' &&
+        b.id !== excludeId
+      );
+      if (existing.length >= 1) {
+        errors.push(`Bereits ${existing.length} Klassenarbeit(en) an diesem Tag in ${klasse}: ${existing.map(b => b.fach).join(', ')}`);
+      }
+    }
+
+    // 3b. Nachschreiber: Warnung ab 2+ am selben Tag (nicht blockierend)
+    if (buchung.art === 'Nachschreiber') {
+      const existingNS = this.buchungen.filter(b =>
+        b.datum === dk && b.klasse === klasse &&
+        b.art === 'Nachschreiber' &&
+        b.id !== excludeId
+      );
+      if (existingNS.length >= 2) {
+        warnings.push(`Bereits ${existingNS.length} Nachschreibtermine an diesem Tag in ${klasse}`);
+      }
+    }
+
+    // 4. Max 2 KA per week (NVO BW) — nur reguläre KA, Nachschreiber zählen NICHT
+    if (buchung.art === 'KA') {
+      const monday = getMonday(dk);
+      const maxKa = 2;
+      const weekCount = this.buchungen.filter(b => {
+        if (b.id === excludeId) return false;
+        if (b.klasse !== klasse) return false;
+        if (b.art !== 'KA') return false; // Nur reguläre KA zählen
+        const bMonday = getMonday(b.datum);
+        return dateKey(bMonday) === dateKey(monday);
+      }).length;
+
+      if (weekCount + 1 > maxKa) {
+        errors.push(`Zu viele KA in dieser Woche für ${klasse}: ${weekCount + 1} geplant, max. ${maxKa} erlaubt (NVO BW). Bitte anderen Termin wählen.`);
+      }
+    }
+
+    // 5. Event collision
+    const eventConflict = this._events.find(ev => {
+      if (ev.datum !== dk) return false;
+      if (ev.klassen === 'alle') return true;
+      const kl = ev.klassen.split(',').map(k => k.trim());
+      return kl.includes(klasse);
+    });
+    if (eventConflict) {
+      warnings.push(`Schulveranstaltung an diesem Tag: "${eventConflict.titel}"`);
+    }
+
+    return { warnings, errors, valid: errors.length === 0 };
+  },
+
+  // CRUD Operations
+  addBuchung(buchung) {
+    const newB = {
+      ...buchung,
+      id: generateId(),
+      erstellt_am: new Date().toISOString(),
+      geaendert_am: new Date().toISOString(),
+      status: 'aktiv',
+      erstellt_von: this._user?.kuerzel || '?'
+    };
+    this._buchungen.push(newB);
+    this.save();
+    this.notify();
+    this._syncToServer('create', newB);
+    return newB;
+  },
+
+  updateBuchung(id, updates) {
+    const idx = this._buchungen.findIndex(b => b.id === id);
+    if (idx === -1) return null;
+    this._buchungen[idx] = {
+      ...this._buchungen[idx],
+      ...updates,
+      geaendert_am: new Date().toISOString(),
+      geaendert_von: this._user?.kuerzel || '?'
+    };
+    this.save();
+    this.notify();
+    this._syncToServer('update', this._buchungen[idx]);
+    return this._buchungen[idx];
+  },
+
+  deleteBuchung(id) {
+    const idx = this._buchungen.findIndex(b => b.id === id);
+    if (idx === -1) return;
+    this._buchungen[idx].status = 'storniert';
+    this._buchungen[idx].geaendert_am = new Date().toISOString();
+    this._buchungen[idx].geaendert_von = this._user?.kuerzel || '?';
+    this.save();
+    this.notify();
+    this._syncToServer('delete', this._buchungen[idx]);
+  },
+
+  async _syncToServer(action, buchung, retries = 2) {
+    if (!CONFIG.GAS_URL) return; // Demo-Modus
+    const token = localStorage.getItem('krs_ka_token');
+    if (!token) { console.warn('Sync: Kein Token vorhanden'); return; }
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await fetch(CONFIG.GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action, buchung, token })
+        });
+        const data = await res.json();
+        // 401 = Session abgelaufen → Logout
+        if (data.code === 401) {
+          this.logout();
+          return;
+        }
+        if (data.error && attempt < retries) {
+          // Exponential Backoff bei "System beschäftigt"
+          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+          continue;
+        }
+        return data;
+      } catch(e) {
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+          continue;
+        }
+        console.warn('Sync error (offline?):', e);
+        // TODO: Offline-Queue
+      }
+    }
+  },
+
+  async fetchFromServer() {
+    if (!CONFIG.GAS_URL) return false;
+    try {
+      const token = localStorage.getItem('krs_ka_token');
+      if (!token) return false;
+      const params = new URLSearchParams({ action: 'getAll', token });
+      if (this._lastSync) params.append('since', this._lastSync);
+      const res = await fetch(`${CONFIG.GAS_URL}?${params}`);
+      const data = await res.json();
+      // 401 = Session abgelaufen
+      if (data.code === 401) {
+        this.logout();
+        return false;
+      }
+      if (data.error) { console.warn('Server error:', data.error); return false; }
+      // Bei inkrementellem Update: Buchungen mergen, nicht ersetzen
+      if (data.incremental && data.buchungen) {
+        data.buchungen.forEach(newB => {
+          const idx = this._buchungen.findIndex(b => b.id === newB.id);
+          if (idx >= 0) this._buchungen[idx] = newB;
+          else this._buchungen.push(newB);
+        });
+      } else if (data.buchungen) {
+        this._buchungen = data.buchungen;
+      }
+      if (data.lehrkraefte) this._lehrkraefte = data.lehrkraefte;
+      if (data.events) this._events = data.events;
+      if (data.ferien) this._ferien = data.ferien;
+      this._lastSync = data.timestamp || new Date().toISOString();
+      this.save();
+      this.notify();
+      return true;
+    } catch(e) {
+      console.warn('Fetch error:', e);
+      return false;
+    }
+  },
+
+  async login(kuerzel, pin) {
+    // Demo-Modus: immer erfolgreich wenn keine GAS-URL
+    if (!CONFIG.GAS_URL) {
+      const user = { kuerzel, name: kuerzel, vorname: '' };
+      this.setUser(user);
+      return { success: true, user };
+    }
+    try {
+      // PIN client-seitig hashen vor Übertragung
+      const pinHash = await hashPin(pin);
+      const res = await fetch(CONFIG.GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'login', kuerzel, pin: pinHash })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.token) localStorage.setItem('krs_ka_token', data.token);
+        this.setUser(data.user);
+      }
+      // 401 = Session abgelaufen
+      if (data.code === 401) {
+        this.logout();
+      }
+      return data;
+    } catch(e) {
+      return { success: false, error: 'Verbindungsfehler. Bitte Internetverbindung prüfen.' };
+    }
+  },
+
+  logout() {
+    // Server-seitiges Logout (Session löschen)
+    const token = localStorage.getItem('krs_ka_token');
+    if (CONFIG.GAS_URL && token) {
+      fetch(CONFIG.GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'logout', token })
+      }).catch(() => {}); // Fire-and-forget
+    }
+    this.setUser(null);
+    localStorage.removeItem('krs_ka_token');
+  }
+};
+
+Store.init();
+
+// === Demo Data (wenn keine Buchungen vorhanden) ===
+if (Store._buchungen.length === 0) {
+  const today = new Date();
+  const monday = getMonday(today);
+  const demoData = [
+    { datum: dateKey(addDays(monday,0)), klasse:'5a', fach:'D', art:'KA', lehrkraft:'Sch', notiz:'KA 3 Aufsatz' },
+    { datum: dateKey(addDays(monday,0)), klasse:'7b', fach:'M', art:'KA', lehrkraft:'Mü', notiz:'KA 2 Brüche' },
+    { datum: dateKey(addDays(monday,1)), klasse:'6a', fach:'E', art:'Test', lehrkraft:'We', notiz:'Voc Unit 5' },
+    { datum: dateKey(addDays(monday,1)), klasse:'8c', fach:'Ph', art:'KA', lehrkraft:'Ko', notiz:'Optik' },
+    { datum: dateKey(addDays(monday,2)), klasse:'9a', fach:'D', art:'KA', lehrkraft:'Sch', notiz:'Erörterung' },
+    { datum: dateKey(addDays(monday,2)), klasse:'5b', fach:'M', art:'Test', lehrkraft:'Fi', notiz:'Kopfrechnen' },
+    { datum: dateKey(addDays(monday,3)), klasse:'10a', fach:'E', art:'KA', lehrkraft:'We', notiz:'Reading Comp' },
+    { datum: dateKey(addDays(monday,3)), klasse:'7a', fach:'F', art:'KA', lehrkraft:'Br', notiz:'Unité 4' },
+    { datum: dateKey(addDays(monday,4)), klasse:'6c', fach:'Bio', art:'Test', lehrkraft:'Ha', notiz:'Pflanzen' },
+    { datum: dateKey(addDays(monday,4)), klasse:'8a', fach:'G', art:'KA', lehrkraft:'Li', notiz:'Industrialisierung' },
+  ];
+  demoData.forEach(d => {
+    Store._buchungen.push({
+      ...d, id: generateId(), status: 'aktiv',
+      erstellt_am: new Date().toISOString(), geaendert_am: new Date().toISOString(),
+      erstellt_von: d.lehrkraft
+    });
+  });
+  // Demo-Lehrkräfte
+  Store._lehrkraefte = [
+    { kuerzel:'Sch', name:'Schneider', vorname:'Thomas', faecher:'D,G' },
+    { kuerzel:'Mü', name:'Müller', vorname:'Anna', faecher:'M,Ph' },
+    { kuerzel:'We', name:'Weber', vorname:'Lisa', faecher:'E,F' },
+    { kuerzel:'Ko', name:'Koch', vorname:'Stefan', faecher:'Ph,Ch' },
+    { kuerzel:'Fi', name:'Fischer', vorname:'Maria', faecher:'M,Inf' },
+    { kuerzel:'Br', name:'Braun', vorname:'Julia', faecher:'F,E' },
+    { kuerzel:'Ha', name:'Hartmann', vorname:'Peter', faecher:'Bio,Ch' },
+    { kuerzel:'Li', name:'Lindner', vorname:'Markus', faecher:'G,Gk' },
+    { kuerzel:'Ca', name:'Carse', vorname:'Petra', faecher:'D,E' },
+    { kuerzel:'Sm', name:'Schmitt', vorname:'Daniel', faecher:'M,Sp' },
+  ];
+  Store.save();
+}
+
+// ===== Components =====
+
+// --- Toast ---
+function Toast({ message, type, onClose }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 3000);
+    return () => clearTimeout(t);
+  }, []);
+  return html`<div class="toast ${type || ''}">${message}</div>`;
+}
+
+// --- Login Screen ---
+function LoginScreen({ onLogin }) {
+  const [kuerzel, setKuerzel] = useState('');
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const lehrkraefte = Store.lehrkraefte;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!kuerzel) { setError('Bitte Kürzel auswählen'); return; }
+    if (!pin || pin.length < 4) { setError('Bitte 4-stellige PIN eingeben'); return; }
+    setLoading(true);
+    setError('');
+    const result = await Store.login(kuerzel, pin);
+    setLoading(false);
+    if (result.success) {
+      onLogin(result.user);
+    } else {
+      setError(result.error || 'Login fehlgeschlagen');
+    }
+  };
+
+  // Demo-Modus: Kein PIN nötig
+  const handleDemoLogin = () => {
+    if (!kuerzel) { setError('Bitte Kürzel auswählen'); return; }
+    const lk = lehrkraefte.find(l => l.kuerzel === kuerzel);
+    const user = lk
+      ? { kuerzel: lk.kuerzel, name: lk.name, vorname: lk.vorname }
+      : { kuerzel, name: kuerzel, vorname: '' };
+    Store.setUser(user);
+    onLogin(user);
+  };
+
+  return html`
+    <div class="login-screen">
+      <div class="login-card">
+        <img src="icons/logo-krs.png" alt="KRS Logo" class="login-logo" />
+        <h1>Klassenarbeitsplan</h1>
+        <p class="subtitle">${CONFIG.SCHOOL_NAME}</p>
+        <form onSubmit=${handleSubmit}>
+          <div class="form-group">
+            <label>Lehrkraft-Kürzel</label>
+            <select value=${kuerzel} onChange=${e => setKuerzel(e.target.value)}>
+              <option value="">— Bitte wählen —</option>
+              ${lehrkraefte.length > 0
+                ? lehrkraefte.map(l => html`<option value=${l.kuerzel}>${l.kuerzel} — ${l.vorname} ${l.name}</option>`)
+                : KLASSEN.slice(0,5).map((_, i) => html`<option value=${'LK'+i}>LK${i}</option>`)
+              }
+            </select>
+          </div>
+          ${CONFIG.GAS_URL ? html`
+            <div class="form-group">
+              <label>PIN (4-stellig)</label>
+              <input type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*"
+                class="pin-input" placeholder="• • • •"
+                value=${pin} onInput=${e => setPin(e.target.value)} />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px" disabled=${loading}>
+              ${loading ? 'Prüfe...' : 'Anmelden'}
+            </button>
+          ` : html`
+            <button type="button" class="btn btn-primary" style="width:100%;margin-top:8px"
+              onClick=${handleDemoLogin}>
+              Anmelden (Demo-Modus)
+            </button>
+            <p style="font-size:.75rem;color:var(--text-light);margin-top:8px">
+              Demo-Modus: Keine PIN erforderlich.<br/>
+              Nach GAS-Deployment wird PIN-Login aktiviert.
+            </p>
+          `}
+          ${error && html`<p class="error-msg">${error}</p>`}
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+// --- Booking Dialog ---
+function BookingDialog({ datum, klasse, buchung, onClose, onSave, onDelete, showToast }) {
+  const isEdit = !!buchung;
+  const [fach, setFach] = useState(buchung?.fach || '');
+  const [art, setArt] = useState(buchung?.art || 'KA');
+  const [lehrkraft, setLehrkraft] = useState(buchung?.lehrkraft || Store.user?.kuerzel || '');
+  const [notiz, setNotiz] = useState(buchung?.notiz || '');
+  const [validation, setValidation] = useState(null);
+
+  const bDatum = buchung?.datum || dateKey(datum);
+  const bKlasse = buchung?.klasse || klasse;
+
+  useEffect(() => {
+    if (fach && art) {
+      const v = Store.validate({ datum: bDatum, klasse: bKlasse, fach, art }, buchung?.id);
+      setValidation(v);
+    }
+  }, [fach, art, bDatum, bKlasse]);
+
+  const handleSave = () => {
+    if (!fach) { showToast('Bitte Fach auswählen', 'error'); return; }
+    if (!lehrkraft) { showToast('Bitte Lehrkraft angeben', 'error'); return; }
+    if (validation && !validation.valid) {
+      showToast('Buchung nicht möglich: ' + validation.errors[0], 'error');
+      return;
+    }
+    const data = { datum: bDatum, klasse: bKlasse, fach: sanitize(fach), art, lehrkraft: sanitize(lehrkraft), notiz: sanitize(notiz) };
+    if (isEdit) {
+      Store.updateBuchung(buchung.id, data);
+      showToast('Buchung aktualisiert', 'success');
+    } else {
+      Store.addBuchung(data);
+      showToast('Buchung erstellt', 'success');
+    }
+    onSave();
+  };
+
+  const handleDelete = () => {
+    if (confirm('Buchung wirklich löschen?')) {
+      Store.deleteBuchung(buchung.id);
+      showToast('Buchung gelöscht', '');
+      onDelete();
+    }
+  };
+
+  const lehrkraefte = Store.lehrkraefte;
+
+  return html`
+    <div class="modal-overlay" onClick=${e => e.target === e.currentTarget && onClose()}>
+      <div class="modal">
+        <div class="modal-header">
+          <h2>${isEdit ? 'Buchung bearbeiten' : 'Neue Buchung'}</h2>
+          <button onClick=${onClose} style="font-size:1.3rem;padding:4px">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="display:flex;gap:16px;margin-bottom:16px;padding:10px;background:var(--primary-light);border-radius:var(--radius)">
+            <div><strong>Datum:</strong> ${formatDate(bDatum)}</div>
+            <div><strong>Klasse:</strong> ${bKlasse}</div>
+          </div>
+
+          <div class="form-group">
+            <label>Fach</label>
+            <select value=${fach} onChange=${e => setFach(e.target.value)}>
+              <option value="">— Fach wählen —</option>
+              <optgroup label="Hauptfächer">
+                ${FAECHER.filter(f => f.gruppe === 'Hauptfach').map(f =>
+                  html`<option value=${f.kuerzel}>${f.kuerzel} — ${f.name}</option>`
+                )}
+              </optgroup>
+              <optgroup label="Nebenfächer">
+                ${FAECHER.filter(f => f.gruppe === 'Nebenfach').map(f =>
+                  html`<option value=${f.kuerzel}>${f.kuerzel} — ${f.name}</option>`
+                )}
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Art</label>
+            <div class="radio-group">
+              ${ART_TYPEN.map(t => html`
+                <label class=${art === t.value ? 'active' : ''}>
+                  <input type="radio" name="art" value=${t.value}
+                    checked=${art === t.value} onChange=${() => setArt(t.value)} />
+                  ${t.label}
+                </label>
+              `)}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Lehrkraft</label>
+            <select value=${lehrkraft} onChange=${e => setLehrkraft(e.target.value)}>
+              <option value="">— Lehrkraft wählen —</option>
+              ${lehrkraefte.map(l =>
+                html`<option value=${l.kuerzel}>${l.kuerzel} — ${l.vorname} ${l.name}</option>`
+              )}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Notiz (optional)</label>
+            <textarea value=${notiz} onInput=${e => setNotiz(e.target.value)}
+              placeholder="z.B. KA3 Brüche, Nachschreiber Maier..." />
+          </div>
+
+          ${validation && html`
+            ${validation.errors.map(e => html`
+              <div class="validation-msg error">⛔ ${e}</div>
+            `)}
+            ${validation.warnings.map(w => html`
+              <div class="validation-msg warn">⚠️ ${w}</div>
+            `)}
+            ${validation.valid && validation.warnings.length === 0 && html`
+              <div class="validation-msg ok">✅ Kein Konflikt erkannt</div>
+            `}
+          `}
+        </div>
+        <div class="modal-footer">
+          ${isEdit && html`
+            <button class="btn btn-danger" onClick=${handleDelete} style="margin-right:auto">Löschen</button>
+          `}
+          <button class="btn btn-secondary" onClick=${onClose}>Abbrechen</button>
+          <button class="btn btn-primary" onClick=${handleSave}>
+            ${isEdit ? 'Speichern' : 'Buchen'}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// --- Print Views ---
+function PrintView({ type, filter, onClose }) {
+  const buchungen = Store.buchungen;
+  const user = Store.user;
+
+  let title = '';
+  let filtered = [];
+
+  if (type === 'mine') {
+    title = `Meine Klassenarbeiten — ${user?.kuerzel || '?'} (${user?.vorname || ''} ${user?.name || ''})`;
+    filtered = buchungen.filter(b => b.lehrkraft === user?.kuerzel).sort((a,b) => a.datum.localeCompare(b.datum));
+  } else if (type === 'klasse') {
+    title = `Klassenarbeitsplan — Klasse ${filter}`;
+    filtered = buchungen.filter(b => b.klasse === filter).sort((a,b) => a.datum.localeCompare(b.datum));
+  } else if (type === 'all') {
+    title = `Gesamtübersicht Klassenarbeiten — ${CONFIG.SCHOOL_NAME}`;
+    filtered = [...buchungen].sort((a,b) => a.datum.localeCompare(b.datum) || a.klasse.localeCompare(b.klasse));
+  }
+
+  return html`
+    <div class="print-overlay">
+      <div class="print-header">
+        <div>
+          <h2>${title}</h2>
+          <p style="color:var(--text-light);font-size:.85rem">Schuljahr ${CONFIG.SCHOOL_YEAR} — Stand: ${formatDate(new Date())}</p>
+        </div>
+        <div class="no-print" style="display:flex;gap:8px">
+          <button class="btn btn-primary" onClick=${() => window.print()}>🖨️ Drucken</button>
+          <button class="btn btn-secondary" onClick=${onClose}>Schließen</button>
+        </div>
+      </div>
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>KW</th>
+            <th>Klasse</th>
+            <th>Fach</th>
+            <th>Art</th>
+            <th>Lehrkraft</th>
+            <th>Notiz</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.length === 0
+            ? html`<tr><td colspan="7" style="text-align:center;color:var(--text-light)">Keine Einträge</td></tr>`
+            : filtered.map(b => html`
+              <tr>
+                <td>${formatDate(b.datum)}</td>
+                <td>${getKW(b.datum)}</td>
+                <td><strong>${b.klasse}</strong></td>
+                <td>${b.fach}</td>
+                <td>${b.art}</td>
+                <td>${b.lehrkraft}</td>
+                <td>${b.notiz || '—'}</td>
+              </tr>
+            `)
+          }
+        </tbody>
+      </table>
+      <p style="margin-top:20px;font-size:.75rem;color:var(--text-light)">
+        Generiert am ${new Date().toLocaleString('de-DE')} — ${CONFIG.SCHOOL_NAME}
+      </p>
+    </div>
+  `;
+}
+
+// --- Sidebar Menu ---
+function Sidebar({ onClose, onPrint, onLogout }) {
+  const user = Store.user;
+  const [klasseFilter, setKlasseFilter] = useState('5a');
+
+  return html`
+    <div class="sidebar-overlay" onClick=${onClose}>
+      <div class="sidebar" onClick=${e => e.stopPropagation()}>
+        <div class="user-info">
+          <strong>${user?.vorname || ''} ${user?.name || user?.kuerzel || '?'}</strong>
+          Kürzel: ${user?.kuerzel || '?'}
+        </div>
+
+        <h3>Druckansichten</h3>
+        <div class="sidebar-item" onClick=${() => onPrint('mine')}>
+          <span class="icon">📋</span> Meine Arbeiten
+        </div>
+        <div style="padding:4px 20px">
+          <div style="display:flex;gap:4px;align-items:center">
+            <select value=${klasseFilter} onChange=${e => setKlasseFilter(e.target.value)}
+              style="padding:6px;border:1px solid var(--border);border-radius:var(--radius);font-size:.85rem">
+              ${KLASSEN.map(k => html`<option value=${k}>${k}</option>`)}
+            </select>
+            <button class="btn btn-sm btn-secondary" onClick=${() => onPrint('klasse', klasseFilter)}>
+              Klasse drucken
+            </button>
+          </div>
+        </div>
+        <div class="sidebar-item" onClick=${() => onPrint('all')}>
+          <span class="icon">📊</span> Gesamtübersicht
+        </div>
+
+        <div class="sidebar-divider" />
+
+        <h3>Einstellungen</h3>
+        <div class="sidebar-item" onClick=${() => { if(confirm('Wirklich abmelden?')) onLogout(); }}>
+          <span class="icon">🚪</span> Abmelden
+        </div>
+
+        <div class="sidebar-divider" />
+        <div style="padding:12px 20px;font-size:.75rem;color:var(--text-light)">
+          Version ${CONFIG.APP_VERSION}<br/>
+          ${CONFIG.GAS_URL ? 'Online-Modus' : 'Demo-Modus (offline)'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// --- Main Calendar ---
+function CalendarView({ onCellClick, onChipClick, visibleKlassen }) {
+  const [currentMonday, setCurrentMonday] = useState(getMonday(new Date()));
+  const weekDates = useMemo(() => getWeekDates(currentMonday), [currentMonday]);
+  const kw = getKW(currentMonday);
+  const todayKey = dateKey(new Date());
+
+  const prevWeek = () => setCurrentMonday(addDays(currentMonday, -7));
+  const nextWeek = () => setCurrentMonday(addDays(currentMonday, 7));
+  const goToday = () => setCurrentMonday(getMonday(new Date()));
+
+  const klassen = visibleKlassen || KLASSEN;
+  const cols = klassen.length + 1; // +1 for day column
+
+  return html`
+    <div class="nav-bar">
+      <div class="week-nav">
+        <button onClick=${prevWeek}>◀</button>
+        <span class="week-label">KW ${kw} · ${formatDateShort(currentMonday)} – ${formatDateShort(addDays(currentMonday, 4))}</span>
+        <button onClick=${nextWeek}>▶</button>
+      </div>
+      <button class="today-btn" onClick=${goToday}>Heute</button>
+    </div>
+
+    <div class="calendar-wrap">
+      <div class="calendar" style="grid-template-columns: 80px repeat(${klassen.length}, minmax(90px, 1fr))">
+        <!-- Header Row -->
+        <div class="cal-header day-col">Tag</div>
+        ${klassen.map(k => html`<div class="cal-header">${k}</div>`)}
+
+        <!-- Day Rows -->
+        ${weekDates.map(date => {
+          const dk = dateKey(date);
+          const isToday = dk === todayKey;
+          const holiday = isHoliday(date, Store.ferien);
+          const holidayName = holiday ? getHolidayName(date, Store.ferien) : '';
+          const we = isWeekend(date);
+
+          return html`
+            <!-- Day Label -->
+            <div class="cal-day ${isToday ? 'today' : ''} ${holiday ? 'holiday' : ''}">
+              <div class="day-name">${date.toLocaleDateString('de-DE', {weekday:'short'})}</div>
+              <div class="day-date">${date.getDate()}.${date.getMonth()+1}.</div>
+              ${holiday ? html`<div style="font-size:.65rem;color:var(--holiday)">${holidayName}</div>` : ''}
+            </div>
+
+            <!-- Cells for each class -->
+            ${klassen.map(k => {
+              if (holiday || we) {
+                return html`<div class="cal-cell ${holiday ? 'holiday' : 'weekend'}">
+                  ${holiday ? html`<span class="chip holiday-chip">${holidayName}</span>` : ''}
+                </div>`;
+              }
+              const buchungen = Store.getBuchungenForDay(date, k);
+              const monday = getMonday(date);
+              const kaCount = Store.getKaCountForWeek(monday, k);
+              const maxKa = KLASSEN_META[k]?.maxKaWoche || 3;
+              const warnWeek = kaCount >= maxKa;
+
+              return html`
+                <div class="cal-cell" onClick=${() => buchungen.length === 0 && onCellClick(date, k)}>
+                  ${buchungen.map(b => {
+                    const exc = isExceptionBooking(b);
+                    return html`
+                    <span class="chip ${getChipClass(b.art, b.fach, exc)}"
+                      onClick=${(e) => { e.stopPropagation(); onChipClick(b); }}
+                      title=${exc ? 'Ausnahme: 3+ KA in dieser Woche!' : ''}>
+                      ${exc ? '⚠ ' : ''}${b.fach} ${b.art}
+                      <span class="chip-teacher">(${b.lehrkraft})</span>
+                    </span>
+                  `})}
+                  ${warnWeek && buchungen.some(b => b.art === 'KA') ? html`<span class="warn-badge">!</span>` : ''}
+                </div>
+              `;
+            })}
+          `;
+        })}
+      </div>
+    </div>
+  `;
+}
+
+// --- Month View ---
+function MonthView({ onCellClick, onChipClick, visibleKlassen }) {
+  const now = new Date();
+  const [currentYear, setCurrentYear] = useState(now.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(now.getMonth());
+  const todayKey = dateKey(now);
+
+  const weekdays = useMemo(() => getMonthWeekdays(currentYear, currentMonth), [currentYear, currentMonth]);
+  const klassen = visibleKlassen || KLASSEN;
+
+  const prevMonth = () => {
+    if (currentMonth === 0) { setCurrentYear(y => y - 1); setCurrentMonth(11); }
+    else setCurrentMonth(m => m - 1);
+  };
+  const nextMonth = () => {
+    if (currentMonth === 11) { setCurrentYear(y => y + 1); setCurrentMonth(0); }
+    else setCurrentMonth(m => m + 1);
+  };
+  const goToday = () => { setCurrentYear(now.getFullYear()); setCurrentMonth(now.getMonth()); };
+
+  return html`
+    <div class="nav-bar">
+      <div class="week-nav">
+        <button onClick=${prevMonth}>◀</button>
+        <span class="week-label">${MONTH_NAMES[currentMonth]} ${currentYear}</span>
+        <button onClick=${nextMonth}>▶</button>
+      </div>
+      <button class="today-btn" onClick=${goToday}>Heute</button>
+    </div>
+
+    <div class="calendar-wrap">
+      <div class="month-grid" style="grid-template-columns: 70px repeat(${klassen.length}, minmax(80px, 1fr))">
+        <!-- Header -->
+        <div class="cal-header day-col" style="min-width:70px">Tag</div>
+        ${klassen.map(k => html`<div class="cal-header">${k}</div>`)}
+
+        <!-- Day Rows -->
+        ${weekdays.map((date, i) => {
+          const dk = dateKey(date);
+          const isToday = dk === todayKey;
+          const holiday = isHoliday(date, Store.ferien);
+          const holidayName = holiday ? getHolidayName(date, Store.ferien) : '';
+          const isMonday = date.getDay() === 1 && i > 0;
+
+          return html`
+            ${isMonday ? html`<div class="month-week-sep"></div>` : ''}
+            <div class="month-day-label ${isToday ? 'today' : ''} ${holiday ? 'holiday' : ''}">
+              <div class="day-name">${date.toLocaleDateString('de-DE', {weekday:'short'})}</div>
+              <div class="day-date">${date.getDate()}.${date.getMonth()+1}.</div>
+              ${holiday ? html`<div style="font-size:.55rem;color:var(--holiday)">${holidayName}</div>` : ''}
+            </div>
+
+            ${klassen.map(k => {
+              if (holiday) {
+                return html`<div class="month-cell holiday"></div>`;
+              }
+              const buchungen = Store.getBuchungenForDay(date, k);
+              return html`
+                <div class="month-cell" onClick=${() => buchungen.length === 0 && onCellClick(date, k)}>
+                  ${buchungen.map(b => {
+                    const exc = isExceptionBooking(b);
+                    return html`
+                      <span class="month-chip ${getChipClass(b.art, b.fach, exc)}"
+                        onClick=${(e) => { e.stopPropagation(); onChipClick(b); }}
+                        title="${b.fach} ${b.art} (${b.lehrkraft})${b.notiz ? ' – ' + b.notiz : ''}">
+                        ${b.fach}(${b.lehrkraft})
+                      </span>
+                    `;
+                  })}
+                </div>
+              `;
+            })}
+          `;
+        })}
+      </div>
+    </div>
+  `;
+}
+
+// --- Year View ---
+function YearView({ onMonthClick, onDayClick, visibleKlassen }) {
+  const now = new Date();
+  const todayKey = dateKey(now);
+  // Determine school year: if month >= August, start year = current year; else start year = current year - 1
+  const startYear = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+  const schoolMonths = useMemo(() => getSchoolYearMonths(startYear), [startYear]);
+  const klassen = visibleKlassen || KLASSEN;
+
+  // Build a lookup map for all bookings by date
+  const bookingsByDate = useMemo(() => {
+    const map = {};
+    Store.buchungen.forEach(b => {
+      // Apply class filter
+      if (klassen.length < KLASSEN.length && !klassen.includes(b.klasse)) return;
+      if (!map[b.datum]) map[b.datum] = [];
+      map[b.datum].push(b);
+    });
+    return map;
+  }, [Store.buchungen, klassen]);
+
+  return html`
+    <div class="year-container">
+      <div class="year-nav">
+        <h2>Schuljahr ${startYear}/${(startYear+1).toString().slice(-2)}</h2>
+      </div>
+
+      <div class="year-legend">
+        <span style="font-weight:600;font-size:.85rem">Legende:</span>
+        <div class="year-legend-item"><div class="year-legend-dot" style="background:var(--ka-haupt)"></div> KA Hauptfach</div>
+        <div class="year-legend-item"><div class="year-legend-dot" style="background:var(--ka-neben)"></div> KA Nebenfach</div>
+        <div class="year-legend-item"><div class="year-legend-dot" style="background:var(--gold)"></div> Test</div>
+        <div class="year-legend-item"><div class="year-legend-dot" style="background:var(--exception)"></div> Ausnahme (3+ KA/Woche)</div>
+        <div class="year-legend-item"><div class="year-legend-dot" style="background:var(--holiday)"></div> Ferien</div>
+      </div>
+
+      <div class="year-grid">
+        ${schoolMonths.map(({year, month}) => {
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          // Build weekday grid (Mo-Fr)
+          const firstDay = new Date(year, month, 1).getDay();
+          // Find how many leading empty cells for first week (Mon=0 offset)
+          const startOffset = firstDay === 0 ? 4 : firstDay - 1; // Mon=0, Tue=1, ... Fri=4
+
+          const dayCells = [];
+          // Add empty cells for offset
+          for (let i = 0; i < startOffset; i++) {
+            dayCells.push({ empty: true });
+          }
+          // Add all weekdays of the month
+          for (let d = 1; d <= daysInMonth; d++) {
+            const date = new Date(year, month, d);
+            const dow = date.getDay();
+            if (dow === 0 || dow === 6) continue; // skip weekends
+            // If this is Monday and we need to fill previous week's gaps
+            if (dow === 1 && dayCells.length > 0 && dayCells.length % 5 !== 0) {
+              while (dayCells.length % 5 !== 0) dayCells.push({ empty: true });
+            }
+            const dk = dateKey(date);
+            const holiday = isHoliday(date, Store.ferien);
+            const bookings = bookingsByDate[dk] || [];
+            dayCells.push({ date, dk, day: d, holiday, bookings, isToday: dk === todayKey });
+          }
+          // Fill trailing empty cells
+          while (dayCells.length % 5 !== 0) dayCells.push({ empty: true });
+
+          return html`
+            <div class="mini-month">
+              <div class="mini-month-header" onClick=${() => onMonthClick(year, month)} style="cursor:pointer">
+                ${MONTH_NAMES[month]} ${year}
+              </div>
+              <div class="mini-month-grid">
+                <div class="mini-month-day-header">Mo</div>
+                <div class="mini-month-day-header">Di</div>
+                <div class="mini-month-day-header">Mi</div>
+                <div class="mini-month-day-header">Do</div>
+                <div class="mini-month-day-header">Fr</div>
+                ${dayCells.map(cell => {
+                  if (cell.empty) return html`<div class="mini-day empty"></div>`;
+                  const dots = cell.bookings.slice(0, 4).map(b => {
+                    const exc = isExceptionBooking(b);
+                    const cls = exc ? 'exception' : (b.art === 'Test' || b.art === 'VocTest') ? 'test'
+                      : getFachGruppe(b.fach) === 'Hauptfach' ? 'ka-haupt' : 'ka-neben';
+                    return html`<div class="mini-dot ${cls}"></div>`;
+                  });
+                  return html`
+                    <div class="mini-day ${cell.isToday ? 'today' : ''} ${cell.holiday ? 'holiday' : ''}"
+                      onClick=${() => !cell.holiday && onDayClick(cell.date)}
+                      title="${cell.holiday ? getHolidayName(cell.date, Store.ferien) : cell.bookings.map(b => b.fach + ' ' + b.art + ' ' + b.klasse).join(', ')}">
+                      <span class="day-num">${cell.day}</span>
+                      ${dots.length > 0 ? html`<div class="mini-day-dots">${dots}</div>` : ''}
+                    </div>
+                  `;
+                })}
+              </div>
+            </div>
+          `;
+        })}
+      </div>
+    </div>
+  `;
+}
+
+// --- Main App ---
+function App() {
+  const [user, setUser] = useState(Store.user);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [dialog, setDialog] = useState(null); // { datum, klasse, buchung? }
+  const [printView, setPrintView] = useState(null); // { type, filter }
+  const [toast, setToast] = useState(null);
+  const [filterKlasse, setFilterKlasse] = useState('alle');
+  const [filterLehrkraft, setFilterLehrkraft] = useState('alle');
+  const [viewMode, setViewMode] = useState('week'); // 'week', 'month', 'year'
+  const [, forceUpdate] = useState(0);
+
+  // Subscribe to store changes
+  useEffect(() => {
+    return Store.subscribe(() => forceUpdate(n => n + 1));
+  }, []);
+
+  // Polling
+  useEffect(() => {
+    if (!CONFIG.GAS_URL || !user) return;
+    Store.fetchFromServer();
+    const interval = setInterval(() => Store.fetchFromServer(), CONFIG.POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Auto-logout after 4 hours (shared iPads)
+  useEffect(() => {
+    if (!user) return;
+    const timeout = setTimeout(() => {
+      Store.logout();
+      setUser(null);
+      showToast('Automatisch abgemeldet (Sicherheit)', '');
+    }, 4 * 60 * 60 * 1000);
+    return () => clearTimeout(timeout);
+  }, [user]);
+
+  const showToast = (msg, type) => setToast({ message: msg, type });
+
+  const visibleKlassen = useMemo(() => {
+    if (filterKlasse !== 'alle') return [filterKlasse];
+    // Filter by Stufe
+    return KLASSEN;
+  }, [filterKlasse]);
+
+  if (!user) {
+    return html`<${LoginScreen} onLogin=${u => setUser(u)} />`;
+  }
+
+  if (printView) {
+    return html`<${PrintView} type=${printView.type} filter=${printView.filter} onClose=${() => setPrintView(null)} />`;
+  }
+
+  return html`
+    <div class="app">
+      <div class="header">
+        <img src="icons/logo-krs.png" alt="KRS" class="header-logo" />
+        <h1>Klassenarbeitsplan</h1>
+        <div class="header-right">
+          <span style="font-size:.8rem;opacity:.8">${user.kuerzel}</span>
+          <button class="btn-icon" onClick=${() => setShowSidebar(true)} title="Menü">☰</button>
+        </div>
+      </div>
+
+      <div class="filter-bar" style="padding:8px 16px;background:#fff;border-bottom:1px solid var(--border)">
+        <span class="filter-label">Filter:</span>
+        <select value=${filterKlasse} onChange=${e => setFilterKlasse(e.target.value)}>
+          <option value="alle">Alle Klassen</option>
+          ${['5','6','7','8','9','10'].map(s => html`
+            <option value=${'stufe'+s}>— Stufe ${s} —</option>
+          `)}
+          ${KLASSEN.map(k => html`<option value=${k}>${k}</option>`)}
+        </select>
+        <select value=${filterLehrkraft} onChange=${e => setFilterLehrkraft(e.target.value)}>
+          <option value="alle">Alle Lehrkräfte</option>
+          <option value="mine">Nur meine</option>
+          ${Store.lehrkraefte.map(l =>
+            html`<option value=${l.kuerzel}>${l.kuerzel} — ${l.name}</option>`
+          )}
+        </select>
+        <button class="btn btn-sm btn-primary"
+          onClick=${() => setDialog({ datum: new Date(), klasse: filterKlasse !== 'alle' && !filterKlasse.startsWith('stufe') ? filterKlasse : '5a' })}>
+          + Neue Buchung
+        </button>
+        <div class="view-switcher">
+          <button class=${viewMode === 'week' ? 'active' : ''} onClick=${() => setViewMode('week')}>Woche</button>
+          <button class=${viewMode === 'month' ? 'active' : ''} onClick=${() => setViewMode('month')}>Monat</button>
+          <button class=${viewMode === 'year' ? 'active' : ''} onClick=${() => setViewMode('year')}>Jahr</button>
+        </div>
+      </div>
+
+      ${viewMode === 'week' && html`
+        <${CalendarView}
+          visibleKlassen=${(() => {
+            if (filterKlasse === 'alle') return KLASSEN;
+            if (filterKlasse.startsWith('stufe')) {
+              const s = filterKlasse.replace('stufe','');
+              return KLASSEN.filter(k => k.startsWith(s));
+            }
+            return [filterKlasse];
+          })()}
+          onCellClick=${(datum, klasse) => setDialog({ datum, klasse })}
+          onChipClick=${(buchung) => setDialog({ datum: buchung.datum, klasse: buchung.klasse, buchung })}
+        />
+      `}
+
+      ${viewMode === 'month' && html`
+        <${MonthView}
+          visibleKlassen=${(() => {
+            if (filterKlasse === 'alle') return KLASSEN;
+            if (filterKlasse.startsWith('stufe')) {
+              const s = filterKlasse.replace('stufe','');
+              return KLASSEN.filter(k => k.startsWith(s));
+            }
+            return [filterKlasse];
+          })()}
+          onCellClick=${(datum, klasse) => setDialog({ datum, klasse })}
+          onChipClick=${(buchung) => setDialog({ datum: buchung.datum, klasse: buchung.klasse, buchung })}
+        />
+      `}
+
+      ${viewMode === 'year' && html`
+        <${YearView}
+          visibleKlassen=${(() => {
+            if (filterKlasse === 'alle') return KLASSEN;
+            if (filterKlasse.startsWith('stufe')) {
+              const s = filterKlasse.replace('stufe','');
+              return KLASSEN.filter(k => k.startsWith(s));
+            }
+            return [filterKlasse];
+          })()}
+          onMonthClick=${(year, month) => { setViewMode('month'); }}
+          onDayClick=${(date) => { setViewMode('week'); }}
+        />
+      `}
+
+      ${dialog && html`
+        <${BookingDialog}
+          datum=${dialog.datum}
+          klasse=${dialog.klasse}
+          buchung=${dialog.buchung}
+          onClose=${() => setDialog(null)}
+          onSave=${() => setDialog(null)}
+          onDelete=${() => setDialog(null)}
+          showToast=${showToast}
+        />
+      `}
+
+      ${showSidebar && html`
+        <${Sidebar}
+          onClose=${() => setShowSidebar(false)}
+          onPrint=${(type, filter) => { setShowSidebar(false); setPrintView({ type, filter }); }}
+          onLogout=${() => { Store.logout(); setUser(null); setShowSidebar(false); }}
+        />
+      `}
+
+      ${toast && html`<${Toast} message=${toast.message} type=${toast.type} onClose=${() => setToast(null)} />`}
+    </div>
+  `;
+}
+
+// ===== Mount =====
+render(html`<${App} />`, document.getElementById('app'));
+
+// ===== Service Worker Registration =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(e => console.log('SW registration failed:', e));
+}
+</script>
+</body>
+</html>
