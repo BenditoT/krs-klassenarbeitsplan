@@ -192,6 +192,8 @@ a{color:var(--primary);text-decoration:none}
 .month-chip.event{background:var(--event)}
 .month-chip.exception{background:var(--exception)}
 .month-week-sep{grid-column:1/-1;height:2px;background:var(--primary-light)}
+.quarter-month-sep{grid-column:1/-1;height:4px;background:var(--primary);opacity:.3}
+.quarter-month-label{grid-column:1/-1;padding:6px 12px;font-weight:700;font-size:.85rem;background:var(--primary-light);color:var(--primary-dark);border-bottom:1px solid var(--border)}
 
 /* ===== Year View ===== */
 .year-container{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px}
@@ -371,11 +373,22 @@ function getMonthWeekdays(year, month) {
 const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 
 function getSchoolYearMonths(schoolYearStart) {
-  // Returns array of {year, month} from September to July
+  // Returns array of {year, month} from September to September (13 months)
   const months = [];
-  for (let i = 0; i < 11; i++) {
+  for (let i = 0; i < 13; i++) {
     const m = (8 + i) % 12; // Start at September (8)
-    const y = m >= 8 ? schoolYearStart : schoolYearStart + 1;
+    const y = (8 + i) < 12 ? schoolYearStart : schoolYearStart + 1;
+    months.push({ year: y, month: m });
+  }
+  return months;
+}
+
+function getQuarterMonths(centerYear, centerMonth) {
+  // Returns 3 consecutive months starting from the given month
+  const months = [];
+  for (let i = 0; i < 3; i++) {
+    const m = (centerMonth + i) % 12;
+    const y = centerMonth + i >= 12 ? centerYear + 1 : centerYear;
     months.push({ year: y, month: m });
   }
   return months;
@@ -1274,6 +1287,109 @@ function MonthView({ onCellClick, onChipClick, visibleKlassen }) {
   `;
 }
 
+// --- Quarter View (3-Monatsansicht) ---
+function QuarterView({ onCellClick, onChipClick, visibleKlassen }) {
+  const now = new Date();
+  // Default: start at current month
+  const [startYear, setStartYear] = useState(now.getFullYear());
+  const [startMonth, setStartMonth] = useState(now.getMonth());
+  const todayKey = dateKey(now);
+  const klassen = visibleKlassen || KLASSEN;
+
+  const quarterMonths = useMemo(() => getQuarterMonths(startYear, startMonth), [startYear, startMonth]);
+
+  const prevQuarter = () => {
+    let m = startMonth - 3;
+    let y = startYear;
+    if (m < 0) { m += 12; y--; }
+    setStartYear(y); setStartMonth(m);
+  };
+  const nextQuarter = () => {
+    let m = startMonth + 3;
+    let y = startYear;
+    if (m >= 12) { m -= 12; y++; }
+    setStartYear(y); setStartMonth(m);
+  };
+  const goToday = () => { setStartYear(now.getFullYear()); setStartMonth(now.getMonth()); };
+
+  // Collect all weekdays for all 3 months
+  const allDays = useMemo(() => {
+    const result = [];
+    quarterMonths.forEach(({ year, month }, mi) => {
+      const days = getMonthWeekdays(year, month);
+      result.push({ type: 'month-label', label: MONTH_NAMES[month] + ' ' + year, mi });
+      days.forEach((date, i) => {
+        const isMonday = date.getDay() === 1 && i > 0;
+        result.push({ type: 'day', date, isMonday, mi });
+      });
+    });
+    return result;
+  }, [quarterMonths]);
+
+  const labelStart = MONTH_NAMES[quarterMonths[0].month].slice(0,3);
+  const labelEnd = MONTH_NAMES[quarterMonths[2].month].slice(0,3);
+
+  return html`
+    <div class="nav-bar">
+      <div class="week-nav">
+        <button onClick=${prevQuarter}>◀</button>
+        <span class="week-label">${labelStart} – ${labelEnd} ${quarterMonths[0].year}${quarterMonths[2].year !== quarterMonths[0].year ? '/' + quarterMonths[2].year : ''}</span>
+        <button onClick=${nextQuarter}>▶</button>
+      </div>
+      <button class="today-btn" onClick=${goToday}>Heute</button>
+    </div>
+
+    <div class="calendar-wrap">
+      <div class="month-grid" style="grid-template-columns: 70px repeat(${klassen.length}, minmax(80px, 1fr))">
+        <!-- Header -->
+        <div class="cal-header day-col" style="min-width:70px">Tag</div>
+        ${klassen.map(k => html`<div class="cal-header">${k}</div>`)}
+
+        ${allDays.map((item) => {
+          if (item.type === 'month-label') {
+            return html`<div class="quarter-month-label">${item.label}</div>`;
+          }
+          const { date, isMonday } = item;
+          const dk = dateKey(date);
+          const isToday = dk === todayKey;
+          const holiday = isHoliday(date, Store.ferien);
+          const holidayName = holiday ? getHolidayName(date, Store.ferien) : '';
+
+          return html`
+            ${isMonday ? html`<div class="month-week-sep"></div>` : ''}
+            <div class="month-day-label ${isToday ? 'today' : ''} ${holiday ? 'holiday' : ''}">
+              <div class="day-name">${date.toLocaleDateString('de-DE', {weekday:'short'})}</div>
+              <div class="day-date">${date.getDate()}.${date.getMonth()+1}.</div>
+              ${holiday ? html`<div style="font-size:.55rem;color:var(--holiday)">${holidayName}</div>` : ''}
+            </div>
+
+            ${klassen.map(k => {
+              if (holiday) {
+                return html`<div class="month-cell holiday"></div>`;
+              }
+              const buchungen = Store.getBuchungenForDay(date, k);
+              return html`
+                <div class="month-cell" onClick=${() => buchungen.length === 0 && onCellClick(date, k)}>
+                  ${buchungen.map(b => {
+                    const exc = isExceptionBooking(b);
+                    return html`
+                      <span class="month-chip ${getChipClass(b.art, b.fach, exc)}"
+                        onClick=${(e) => { e.stopPropagation(); onChipClick(b); }}
+                        title="${b.fach} ${b.art} (${b.lehrkraft})${b.notiz ? ' – ' + b.notiz : ''}">
+                        ${b.fach}(${b.lehrkraft})
+                      </span>
+                    `;
+                  })}
+                </div>
+              `;
+            })}
+          `;
+        })}
+      </div>
+    </div>
+  `;
+}
+
 // --- Year View ---
 function YearView({ onMonthClick, onDayClick, visibleKlassen }) {
   const now = new Date();
@@ -1386,7 +1502,7 @@ function App() {
   const [toast, setToast] = useState(null);
   const [filterKlasse, setFilterKlasse] = useState('alle');
   const [filterLehrkraft, setFilterLehrkraft] = useState('alle');
-  const [viewMode, setViewMode] = useState('week'); // 'week', 'month', 'year'
+  const [viewMode, setViewMode] = useState('week'); // 'week', 'month', 'quarter', 'year'
   const [, forceUpdate] = useState(0);
 
   // Subscribe to store changes
@@ -1463,7 +1579,8 @@ function App() {
         <div class="view-switcher">
           <button class=${viewMode === 'week' ? 'active' : ''} onClick=${() => setViewMode('week')}>Woche</button>
           <button class=${viewMode === 'month' ? 'active' : ''} onClick=${() => setViewMode('month')}>Monat</button>
-          <button class=${viewMode === 'year' ? 'active' : ''} onClick=${() => setViewMode('year')}>Jahr</button>
+          <button class=${viewMode === 'quarter' ? 'active' : ''} onClick=${() => setViewMode('quarter')}>Quartal</button>
+          <button class=${viewMode === 'year' ? 'active' : ''} onClick=${() => setViewMode('year')}>Schuljahr</button>
         </div>
       </div>
 
@@ -1484,6 +1601,21 @@ function App() {
 
       ${viewMode === 'month' && html`
         <${MonthView}
+          visibleKlassen=${(() => {
+            if (filterKlasse === 'alle') return KLASSEN;
+            if (filterKlasse.startsWith('stufe')) {
+              const s = filterKlasse.replace('stufe','');
+              return KLASSEN.filter(k => k.startsWith(s));
+            }
+            return [filterKlasse];
+          })()}
+          onCellClick=${(datum, klasse) => setDialog({ datum, klasse })}
+          onChipClick=${(buchung) => setDialog({ datum: buchung.datum, klasse: buchung.klasse, buchung })}
+        />
+      `}
+
+      ${viewMode === 'quarter' && html`
+        <${QuarterView}
           visibleKlassen=${(() => {
             if (filterKlasse === 'alle') return KLASSEN;
             if (filterKlasse.startsWith('stufe')) {
