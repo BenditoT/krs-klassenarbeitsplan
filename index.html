@@ -77,7 +77,7 @@ a{color:var(--primary);text-decoration:none}
 .chip.exception{background:var(--exception);animation:pulse-exception 2s infinite}
 @keyframes pulse-exception{0%,100%{opacity:1}50%{opacity:.75}}
 .chip .chip-teacher{font-weight:400;opacity:.85;font-size:.65rem}
-.header-logo{height:32px;width:auto;margin-right:4px;border-radius:4px;background:#fff;padding:2px}
+.header-logo{height:40px;width:auto;margin-right:8px;border-radius:6px;background:#fff;padding:3px;box-shadow:0 1px 4px rgba(0,0,0,.15)}
 
 /* Warning badges */
 .warn-badge{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:var(--warn);color:#fff;font-size:.65rem;display:flex;align-items:center;justify-content:center;font-weight:700}
@@ -117,7 +117,7 @@ a{color:var(--primary);text-decoration:none}
 .login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 60%,var(--accent-dark) 100%)}
 .login-card{background:#fff;border-radius:16px;padding:40px 32px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center}
 .login-card h1{font-size:1.3rem;margin-bottom:4px;color:var(--accent)}
-.login-logo{width:120px;height:auto;margin-bottom:12px}
+.login-logo{width:140px;height:auto;margin-bottom:16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 .login-card .subtitle{color:var(--text-light);font-size:.9rem;margin-bottom:24px}
 .login-card .form-group{text-align:left}
 .login-card .error-msg{color:var(--warn);font-size:.85rem;margin-top:8px}
@@ -192,6 +192,11 @@ a{color:var(--primary);text-decoration:none}
 .month-chip.event{background:var(--event)}
 .month-chip.exception{background:var(--exception)}
 .month-week-sep{grid-column:1/-1;height:2px;background:var(--primary-light)}
+/* Compact holiday rows in Month/Quarter views */
+.month-day-label.holiday{padding:2px 6px;min-height:18px;opacity:.7}
+.month-day-label.holiday .day-name{font-size:.55rem}
+.month-day-label.holiday .day-date{font-size:.65rem}
+.month-cell.holiday{min-height:18px;padding:1px;background:#f3f4f6}
 .quarter-month-sep{grid-column:1/-1;height:4px;background:var(--primary);opacity:.3}
 .quarter-month-label{grid-column:1/-1;padding:6px 12px;font-weight:700;font-size:.85rem;background:var(--primary-light);color:var(--primary-dark);border-bottom:1px solid var(--border)}
 
