@@ -1515,6 +1515,27 @@ function App() {
     return Store.subscribe(() => forceUpdate(n => n + 1));
   }, []);
 
+  // ── Hub-Auth: postMessage-Listener ──────────────
+  useEffect(() => {
+    const isInHub = window.parent !== window;
+    const handleHubAuth = (event) => {
+      if (!event.origin.includes('benditot.github.io') && event.origin !== window.location.origin) return;
+      if (event.data?.type === 'KRS_HUB_AUTH' && event.data?.hub_verified) {
+        const hubUser = event.data.user;
+        if (hubUser?.kuerzel) {
+          const userObj = { kuerzel: hubUser.kuerzel, name: hubUser.lehrkraft_name || hubUser.display_name || hubUser.kuerzel, vorname: (hubUser.display_name || '').split(' ')[0] || '' };
+          Store.setUser(userObj);
+          setUser(userObj);
+        }
+      }
+    };
+    window.addEventListener('message', handleHubAuth);
+    if (isInHub) {
+      window.parent.postMessage({ type: 'KRS_HUB_REQUEST_AUTH', moduleId: 'plan' }, '*');
+    }
+    return () => window.removeEventListener('message', handleHubAuth);
+  }, []);
+
   // Polling
   useEffect(() => {
     if (!CONFIG.GAS_URL || !user) return;
